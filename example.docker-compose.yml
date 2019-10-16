@@ -1,0 +1,102 @@
+version: "3"
+
+services:
+  database:
+    container_name: "${PROJECT_NAME}_database"
+    image: mysql:5.7
+    ports:
+      - "${PORT_DATABASE}:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${DB_NAME}
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+    volumes:
+     - ./database-init:/docker-entrypoint-initdb.d # Place init .sql file(s) here.
+
+  php:
+    image: wodby/wordpress-php:$PHP_TAG
+    container_name: "${PROJECT_NAME}_php"
+    environment:
+      PHP_SENDMAIL_PATH: /usr/sbin/sendmail -t -i -S mailhog:1025
+      DB_HOST: $DB_HOST
+      DB_USER: $DB_USER
+      DB_PASSWORD: $DB_PASSWORD
+      DB_NAME: $DB_NAME
+      PHP_FPM_USER: wodby
+      PHP_FPM_GROUP: wodby
+
+      DB_PREFIX: 'w4p_'
+      WP_ENV: 'production'
+      WP_HOME: ${WP_HOME}
+      WP_SITEURL: ${WP_HOME}/wp
+      AUTH_KEY: $AUTH_KEY
+      SECURE_AUTH_KEY: $SECURE_AUTH_KEY
+      LOGGED_IN_KEY: $LOGGED_IN_KEY
+      NONCE_KEY: $NONCE_KEY
+      AUTH_SALT: $AUTH_SALT
+      SECURE_AUTH_SALT: $SECURE_AUTH_SALT
+      LOGGED_IN_SALT: $LOGGED_IN_SALT
+      NONCE_SALT: $NONCE_SALT
+    volumes:
+      - ./app:/var/www/html
+
+  mailhog:
+    image: mailhog/mailhog
+    container_name: "${PROJECT_NAME}_mailhog"
+    labels:
+      - 'traefik.backend=${PROJECT_NAME}_mailhog'
+      - 'traefik.port=8025'
+      - 'traefik.frontend.rule=Host:mailhog.${PROJECT_BASE_URL}'
+  apache:
+    image: wodby/apache:$APACHE_TAG
+    container_name: "${PROJECT_NAME}_apache"
+    depends_on:
+      - php
+    environment:
+      APACHE_LOG_LEVEL: debug
+      APACHE_BACKEND_HOST: php
+      APACHE_VHOST_PRESET: php
+    volumes:
+      - ./app:/var/www/html
+    labels:
+      - 'traefik.backend=${PROJECT_NAME}_apache'
+      - 'traefik.port=80'
+      - 'traefik.frontend.rule=Host:${PROJECT_BASE_URL}'
+
+  pma:
+    image: phpmyadmin/phpmyadmin
+    container_name: "${PROJECT_NAME}_pma"
+    environment:
+      PMA_HOST: $DB_HOST
+      PMA_USER: $DB_USER
+      PMA_PASSWORD: $DB_PASSWORD
+      PHP_UPLOAD_MAX_FILESIZE: 1G
+      PHP_MAX_INPUT_VARS: 1G
+    labels:
+      - 'traefik.backend=${PROJECT_NAME}_pma'
+      - 'traefik.port=80'
+      - 'traefik.frontend.rule=Host:pma.${PROJECT_BASE_URL}'
+
+  portainer:
+    image: portainer/portainer
+    container_name: "${PROJECT_NAME}_portainer"
+    command: --no-auth -H unix:///var/run/docker.sock
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    labels:
+      - 'traefik.backend=${PROJECT_NAME}_portainer'
+      - 'traefik.port=9000'
+      - 'traefik.frontend.rule=Host:portainer.${PROJECT_BASE_URL}'
+
+  traefik:
+    image: traefik:1.7-alpine
+    container_name: "${PROJECT_NAME}_traefik"
+    command: -c /dev/null --web --docker --logLevel=INFO
+    ports:
+      - '8000:80'
+#      - '8080:8080' # Dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+
