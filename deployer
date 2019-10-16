@@ -1,0 +1,96 @@
+#!/bin/bash
+# PLACEHOLDERS
+# [PROJECSTDIR] - local directory for projects 
+# [PROJECTDIR] - new project dir
+# [PROJECTPATH] - project dir path;
+# [BRANCH] - work branch
+
+# [STAGING_USER] - staging user in the server
+# [STAGING_MYSQLUSER] - staging mysql user
+# [STAGING_MYSQLPASSWORD] - staging mysql password
+# [ROOTUSER] - Mysql root user
+# [ROOTPASSWORD] - Mysql root password
+
+
+BRANCH='test-docker';
+DIR=$(pwd);
+APPDIR="$DIR/app";
+GITURL=$1;
+DOCKERCOMPOSE_EXAMPLE="example.docker-compose.yml"
+ENVFILE_EXAMPLE="example.env"
+DB_BACKUP_DIR="$DIR/database-init"
+
+
+#Clone project from Git;
+if [-z "$GITURL"]
+then
+  read -p 'Set project GIT URL:' GITURL
+fi
+
+regex='(https?|ftp|file)://[-A-Za-z0-9\+&@#/%?=~_|!:,.;]*[-A-Za-z0-9\+&@#/%=~_|]'
+
+if [[ $GITURL =~ $regex ]]
+then 
+    git clone $GITURL .;
+    git co $BRANCH
+else
+    echo "Link not valid"
+    exit 1;
+fi
+
+#create app folder and move files to it. 
+mkdir $APPDIR;
+ls | grep -v app | xargs mv -t $APPDIR;
+mv .git $APPDIR;
+mv .gitignore $APPDIR;
+
+#move example.docker-compose.yml to docker-compose.yml in root dir.
+if test -f "$APPDIR/$DOCKERCOMPOSE_EXAMPLE"; then
+    cp "$APPDIR/$DOCKERCOMPOSE_EXAMPLE" "$DIR/docker-compose.yml";
+fi
+
+if test -f "$APPDIR/$ENVFILE_EXAMPLE"; then
+    cp "$APPDIR/$ENVFILE_EXAMPLE" "$DIR/.env";
+fi
+
+export $(egrep -v '^#' .env | xargs)
+
+#Add new domains to hosts file
+if ! echo "127.0.0.1	$PROJECT_BASE_URL" >> /etc/hosts
+  then
+    echo $"ERROR: Not able to write in /etc/hosts"
+    exit;
+  else
+    echo "127.0.0.1	pma.$PROJECT_BASE_URL" >> /etc/hosts
+    echo -e $"Host added to /etc/hosts file \n"
+fi
+
+#update permissions
+sudo chown -R $USER:$USER $DIR
+
+#install packages via composer
+cd $APPDIR
+composer install;
+
+cd $DIR;
+#prepare DB before import
+mkdir $DB_BACKUP_DIR;
+sudo chown -R $USER:$USER $DB_BACKUP_DIR
+
+read -r -p "Please upload DB .sql file to $DB_BACKUP_DIR and press ENTER " RESPONSE
+
+#Start docker
+docker-compose up -d --build;
+
+
+
+
+
+
+
+
+
+
+
+
+
