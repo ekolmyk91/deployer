@@ -77,8 +77,11 @@ if [ "$GITURL" == "$NEWCOMMAND" ]; then
         cd $APPDIR;
 	git clone https://GitWEB4PRO@bitbucket.org/GitWEB4PRO/wp-package.git .;
         composer install
+   else if [ "$CMS" == "drupal" ]; then
+        mkdir $APPDIR;
+        cd $APPDIR;
+        composer create-project drupal-composer/drupal-project:8.x-dev . --no-interaction
    fi
-
 
    echo "Your base url $BASE_URL:8000"
    exit 1;
