@@ -14,11 +14,74 @@
 
 BRANCH='test-docker';
 DIR=$(pwd);
+BASENAME=`basename "$DIR"`
+BASE_URL="$BASENAME.loc"
 APPDIR="$DIR/app";
 GITURL=$1;
+CMS=$2;
+NEWCOMMAND='new';
+ALLOW_CMS=( wordpress drupal );
+
+NEWPROJECT_REPO='https://github.com/ekolmyk91/deployer.git'
 DOCKERCOMPOSE_EXAMPLE="example.docker-compose.yml"
 ENVFILE_EXAMPLE="example.env"
 DB_BACKUP_DIR="$DIR/database-init"
+
+
+### ------- Add new domains to hosts file -------
+add_hosts (){
+	if ! echo "127.0.0.1	$1" >> /etc/hosts
+	  then
+	    echo $"ERROR: Not able to write in /etc/hosts"
+	    exit;
+	  else
+	    echo "127.0.0.1	pma.$1" >> /etc/hosts
+	    echo "127.0.0.1	mailhog.$1" >> /etc/hosts
+	    echo "127.0.0.1	portainer.$1" >> /etc/hosts
+	    echo -e $"Host added to /etc/hosts file \n"
+	fi
+}
+
+#### ------ Rename example.* files -----------
+rename_examples (){
+	if test -f "$1/$DOCKERCOMPOSE_EXAMPLE"; then
+	    mv "$1/$DOCKERCOMPOSE_EXAMPLE" "$DIR/docker-compose.yml";
+	    chmod 777 "$DIR/docker-compose.yml";
+	fi
+
+	if test -f "$1/$ENVFILE_EXAMPLE"; then
+	    mv "$1/$ENVFILE_EXAMPLE" "$DIR/.env";
+	    chmod 777 "$DIR/.env";
+	fi
+}
+
+### --- Clone Docker Compose for specific CMS ----
+if [ "$GITURL" == "$NEWCOMMAND" ]; then
+   if [ -z "$CMS" ]; then
+     echo 'Please specify CMS as the second parameter [wordpress/drupal]';
+     exit 1;
+   fi
+
+#   if [[ -n "${ALLOW_CMS[$CMS]}" ]]; then
+   if [[ ! " ${ALLOW_CMS[@]} " =~ " ${CMS} " ]]; then
+     echo 'Incorrect CMS, please choose one of [wordpress/drupal]'
+     exit 1;
+   fi
+
+   git clone $NEWPROJECT_REPO .
+   git checkout $CMS
+   rm -rf .git
+
+   rename_examples $DIR;
+   chmod -R 777 $DIR;
+
+   #add domains to hosts
+   add_hosts $BASE_URL;
+
+   echo "Your base url $BASE_URL:8000"
+   exit 1;
+fi
+
 
 
 #Clone project from Git;
@@ -40,22 +103,21 @@ fi
 
 #create app folder and move files to it. 
 mkdir $APPDIR;
+chmod 777 $APPDIR;
+
 ls | grep -v app | xargs mv -t $APPDIR;
 mv .git $APPDIR;
 mv .gitignore $APPDIR;
 
 #move example.docker-compose.yml to docker-compose.yml in root dir.
-if test -f "$APPDIR/$DOCKERCOMPOSE_EXAMPLE"; then
-    cp "$APPDIR/$DOCKERCOMPOSE_EXAMPLE" "$DIR/docker-compose.yml";
-fi
-
-if test -f "$APPDIR/$ENVFILE_EXAMPLE"; then
-    cp "$APPDIR/$ENVFILE_EXAMPLE" "$DIR/.env";
-fi
+rename_examples $APPDIR;
 
 export $(egrep -v '^#' .env | xargs)
 
+add_hosts "$PROJECT_NAME.loc"
+
 #Add new domains to hosts file
+<<Comment
 if ! echo "127.0.0.1	$PROJECT_BASE_URL" >> /etc/hosts
   then
     echo $"ERROR: Not able to write in /etc/hosts"
@@ -64,9 +126,10 @@ if ! echo "127.0.0.1	$PROJECT_BASE_URL" >> /etc/hosts
     echo "127.0.0.1	pma.$PROJECT_BASE_URL" >> /etc/hosts
     echo -e $"Host added to /etc/hosts file \n"
 fi
+Comment
 
 #update permissions
-sudo chown -R $USER:$USER $DIR
+#sudo chown -R $USER:$USER $DIR
 
 #install packages via composer
 cd $APPDIR
@@ -75,22 +138,18 @@ composer install;
 cd $DIR;
 #prepare DB before import
 mkdir $DB_BACKUP_DIR;
-sudo chown -R $USER:$USER $DB_BACKUP_DIR
+
+#Set Permissions.
+sudo chmod 777 $DB_BACKUP_DIR;
 
 read -r -p "Please upload DB .sql file to $DB_BACKUP_DIR and press ENTER " RESPONSE
 
 #Start docker
 docker-compose up -d --build;
 
+#Set Permissions.
+chmod 755 $(find $APPDIR -type d)
+chmod 644 $(find $APPDIR -type f)
+chmod 777 "$DIR/.env";
 
-
-
-
-
-
-
-
-
-
-
-
+echo "You base URL $PROJECT_NAME.loc:8000"
