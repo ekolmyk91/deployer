@@ -5,12 +5,6 @@
 # [PROJECTPATH] - project dir path;
 # [BRANCH] - work branch
 
-# [STAGING_USER] - staging user in the server
-# [STAGING_MYSQLUSER] - staging mysql user
-# [STAGING_MYSQLPASSWORD] - staging mysql password
-# [ROOTUSER] - Mysql root user
-# [ROOTPASSWORD] - Mysql root password
-
 
 BRANCH='test-docker';
 DIR=$(pwd);
@@ -85,7 +79,7 @@ fi
 
 
 #Clone project from Git;
-if [-z "$GITURL"]
+if [ -z "$GITURL" ]
 then
   read -p 'Set project GIT URL:' GITURL
 fi
@@ -114,22 +108,8 @@ rename_examples $APPDIR;
 
 export $(egrep -v '^#' .env | xargs)
 
-add_hosts "$PROJECT_NAME.loc"
-
 #Add new domains to hosts file
-<<Comment
-if ! echo "127.0.0.1	$PROJECT_BASE_URL" >> /etc/hosts
-  then
-    echo $"ERROR: Not able to write in /etc/hosts"
-    exit;
-  else
-    echo "127.0.0.1	pma.$PROJECT_BASE_URL" >> /etc/hosts
-    echo -e $"Host added to /etc/hosts file \n"
-fi
-Comment
-
-#update permissions
-#sudo chown -R $USER:$USER $DIR
+add_hosts "$PROJECT_NAME.loc"
 
 #install packages via composer
 cd $APPDIR
@@ -140,7 +120,7 @@ cd $DIR;
 mkdir $DB_BACKUP_DIR;
 
 #Set Permissions.
-sudo chmod 777 $DB_BACKUP_DIR;
+chmod 777 $DB_BACKUP_DIR;
 
 read -r -p "Please upload DB .sql file to $DB_BACKUP_DIR and press ENTER " RESPONSE
 
@@ -148,8 +128,11 @@ read -r -p "Please upload DB .sql file to $DB_BACKUP_DIR and press ENTER " RESPO
 docker-compose up -d --build;
 
 #Set Permissions.
-chmod 755 $(find $APPDIR -type d)
+chmod -R 755 $(find $APPDIR -type d)
 chmod 644 $(find $APPDIR -type f)
 chmod 777 "$DIR/.env";
 
 echo "You base URL $PROJECT_NAME.loc:8000"
+
+
+
