@@ -71,6 +71,14 @@ if [ "$GITURL" == "$NEWCOMMAND" ]; then
 
    #add domains to hosts
    add_hosts $BASE_URL;
+   
+   if [ "$CMS" == "wordpress" ]; then
+        mkdir $APPDIR;
+        cd $APPDIR;
+	git clone https://GitWEB4PRO@bitbucket.org/GitWEB4PRO/wp-package.git .;
+        composer install
+   fi
+
 
    echo "Your base url $BASE_URL:8000"
    exit 1;
@@ -133,6 +141,3 @@ chmod 644 $(find $APPDIR -type f)
 chmod 777 "$DIR/.env";
 
 echo "You base URL $PROJECT_NAME.loc:8000"
-
-
-
