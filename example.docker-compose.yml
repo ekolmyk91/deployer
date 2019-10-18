@@ -28,8 +28,8 @@ services:
 
       DB_PREFIX: 'w4p_'
       WP_ENV: 'production'
-      WP_HOME: ${WP_HOME}
-      WP_SITEURL: ${WP_HOME}/wp
+      WP_HOME: http://${PROJECT_NAME}.loc:8000
+      WP_SITEURL: http://${PROJECT_NAME}.loc:8000/wp
       AUTH_KEY: $AUTH_KEY
       SECURE_AUTH_KEY: $SECURE_AUTH_KEY
       LOGGED_IN_KEY: $LOGGED_IN_KEY
@@ -47,7 +47,7 @@ services:
     labels:
       - 'traefik.backend=${PROJECT_NAME}_mailhog'
       - 'traefik.port=8025'
-      - 'traefik.frontend.rule=Host:mailhog.${PROJECT_BASE_URL}'
+      - 'traefik.frontend.rule=Host:mailhog.${PROJECT_NAME}.loc
   apache:
     image: wodby/apache:$APACHE_TAG
     container_name: "${PROJECT_NAME}_apache"
@@ -62,7 +62,7 @@ services:
     labels:
       - 'traefik.backend=${PROJECT_NAME}_apache'
       - 'traefik.port=80'
-      - 'traefik.frontend.rule=Host:${PROJECT_BASE_URL}'
+      - 'traefik.frontend.rule=Host:${PROJECT_NAME}.loc
 
   pma:
     image: phpmyadmin/phpmyadmin
@@ -76,7 +76,7 @@ services:
     labels:
       - 'traefik.backend=${PROJECT_NAME}_pma'
       - 'traefik.port=80'
-      - 'traefik.frontend.rule=Host:pma.${PROJECT_BASE_URL}'
+      - 'traefik.frontend.rule=Host:pma.${PROJECT_NAME}.loc
 
   portainer:
     image: portainer/portainer
@@ -87,7 +87,7 @@ services:
     labels:
       - 'traefik.backend=${PROJECT_NAME}_portainer'
       - 'traefik.port=9000'
-      - 'traefik.frontend.rule=Host:portainer.${PROJECT_BASE_URL}'
+      - 'traefik.frontend.rule=Host:portainer.${PROJECT_NAME}.loc
 
   traefik:
     image: traefik:1.7-alpine
