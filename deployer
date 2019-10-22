@@ -75,9 +75,9 @@ if [ "$GITURL" == "$NEWCOMMAND" ]; then
    if [ "$CMS" == "wordpress" ]; then
         mkdir $APPDIR;
         cd $APPDIR;
-	git clone https://GitWEB4PRO@bitbucket.org/GitWEB4PRO/wp-package.git .;
+        git clone https://GitWEB4PRO@bitbucket.org/GitWEB4PRO/wp-package.git .;
         composer install
-   else if [ "$CMS" == "drupal" ]; then
+   elif [ "$CMS" == "drupal" ]; then
         mkdir $APPDIR;
         cd $APPDIR;
         composer create-project drupal-composer/drupal-project:8.x-dev . --no-interaction
@@ -144,3 +144,4 @@ chmod 644 $(find $APPDIR -type f)
 chmod 777 "$DIR/.env";
 
 echo "You base URL $PROJECT_NAME.loc:8000"
+
