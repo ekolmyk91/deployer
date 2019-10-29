@@ -36,15 +36,16 @@ add_hosts (){
 	fi
 }
 
+
 #### ------ Rename example.* files -----------
 rename_examples (){
 	if test -f "$1/$DOCKERCOMPOSE_EXAMPLE"; then
-	    mv "$1/$DOCKERCOMPOSE_EXAMPLE" "$DIR/docker-compose.yml";
+	    cp "$1/$DOCKERCOMPOSE_EXAMPLE" "$DIR/docker-compose.yml";
 	    chmod 777 "$DIR/docker-compose.yml";
 	fi
 
 	if test -f "$1/$ENVFILE_EXAMPLE"; then
-	    mv "$1/$ENVFILE_EXAMPLE" "$DIR/.env";
+	    cp "$1/$ENVFILE_EXAMPLE" "$DIR/.env";
 	    chmod 777 "$DIR/.env";
 	fi
 }
@@ -70,7 +71,7 @@ if [ "$GITURL" == "$NEWCOMMAND" ]; then
    chmod -R 777 $DIR;
 
    #add domains to hosts
-   add_hosts $BASE_URL;
+   sudo bash -c "$(declare -f add_hosts); add_hosts $BASE_URL"
    
    if [ "$CMS" == "wordpress" ]; then
         mkdir $APPDIR;
@@ -120,11 +121,12 @@ rename_examples $APPDIR;
 export $(egrep -v '^#' .env | xargs)
 
 #Add new domains to hosts file
-add_hosts "$PROJECT_NAME.loc"
+#sudo add_hosts "$PROJECT_NAME.loc"
+sudo bash -c "$(declare -f add_hosts); add_hosts $PROJECT_NAME.loc"
 
 #install packages via composer
 cd $APPDIR
-composer install;
+sudo composer install;
 
 cd $DIR;
 #prepare DB before import
@@ -136,12 +138,11 @@ chmod 777 $DB_BACKUP_DIR;
 read -r -p "Please upload DB .sql file to $DB_BACKUP_DIR and press ENTER " RESPONSE
 
 #Start docker
-docker-compose up -d --build;
+sudo docker-compose up -d --build;
 
 #Set Permissions.
-chmod -R 755 $(find $APPDIR -type d)
-chmod 644 $(find $APPDIR -type f)
+#chmod -R 755 $(find $APPDIR -type d)
+#chmod 644 $(find $APPDIR -type f)
 chmod 777 "$DIR/.env";
 
 echo "You base URL $PROJECT_NAME.loc:8000"
-
