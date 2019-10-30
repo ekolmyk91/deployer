@@ -3,8 +3,14 @@ Deployer
 
 Quick setup wordpress/drupal projects with docker-compose
 
-Installation
+Requirements
 ------------
+* Ubuntu
+* [Docker](https://docs.docker.com/install/linux/docker-ce/ubuntu)
+* [Docker-compose](https://docs.docker.com/compose/install/)
+
+
+#Installation
 
 ## git clone
 
@@ -24,12 +30,12 @@ sudo mv ~/deployer/deployer /usr/local/bin/deployer
 sudo chmod +x /usr/local/bin/deployer
 ```
 
-Deploy new project
-==================
+#Deploy new project
+
 
 ## Make project dir
 ```
-mkdir ~/Projects/example
+mkdir -p ~/Projects/example
 ```
 
 ## Go to the project dir 
@@ -48,6 +54,15 @@ sudo deployer new drupal
 ```
 After script completion you will see message with your base url, like 
 > Your base url example.loc:8000
+
+###CMS Install configurations
+* DB connection info you will find in .env file if will need.
+* The DB host name must be specified as `database` 
+
+###Import database manually
+```sudo docker exec -i {PROJECT_NAME}_database mysql databasename -u{DB_USER} -p{DB_PASSWORD} --default-character-set=utf8 < latestDatabase.sql```
+
+Replace variables with your data.
 
 ## Change project name
 
@@ -75,11 +90,16 @@ sudo docker-compose stop
 ```
 
 
-Deploy project from repository
-==============================
+#Deploy project from repository
 
-## 1. Go to the project dir 
+
+## 1. Go to the empty project dir 
+It is advisable to name the folder as PROJECT_NAME in example.env file.
+
+If **PROJECT_NAME=example**
+  
 ```
+mkdir -p ~/Projects/example
 cd ~/Projects/example   
 ```
 
