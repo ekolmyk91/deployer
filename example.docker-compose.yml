@@ -27,7 +27,7 @@ services:
       PHP_FPM_GROUP: wodby
 
       DB_PREFIX: 'w4p_'
-      WP_ENV: 'production'
+      WP_ENV: $WP_ENV
       WP_HOME: http://${PROJECT_NAME}.loc:8000
       WP_SITEURL: http://${PROJECT_NAME}.loc:8000/wp
       AUTH_KEY: $AUTH_KEY
