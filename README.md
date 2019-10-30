@@ -29,7 +29,7 @@ Deploy new project
 
 ## Make project dir
 ```
-mkdir dir ~/Projects/example
+mkdir ~/Projects/example
 ```
 
 ## Go to the project dir 
