@@ -101,7 +101,7 @@ regex='(https?|ftp|file)://[-A-Za-z0-9\+&@#/%?=~_|!:,.;]*[-A-Za-z0-9\+&@#/%=~_|]
 if [[ $GITURL =~ $regex ]]
 then 
     git clone $GITURL .;
-    git co $BRANCH
+    git checkout $BRANCH;
 else
     echo "Link not valid"
     exit 1;
